@@ -1120,7 +1120,7 @@ function bootBanner() {
 
   console.log('');
   console.log('  ╔══════════════════════════════════════════════╗');
-  console.log('  ║              OVERLAYV1 ЗАПУЩЕН               ║');
+  console.log('  ║              OverlayV1 ЗАПУЩЕН               ║');
   console.log('  ╚══════════════════════════════════════════════╝');
   console.log('');
   console.log(`  Оверлей (добавить в OBS):   http://localhost:${PORT}/overlay`);

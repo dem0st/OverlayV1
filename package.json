@@ -15,12 +15,12 @@
   "author": "dem0st",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dem0st/overlayv1.git"
+    "url": "https://github.com/dem0st/OverlayV1.git"
   },
   "bugs": {
-    "url": "https://github.com/dem0st/overlayv1/issues"
+    "url": "https://github.com/dem0st/OverlayV1/issues"
   },
-  "homepage": "https://github.com/dem0st/overlayv1#readme",
+  "homepage": "https://github.com/dem0st/OverlayV1#readme",
   "engines": {
     "node": ">=18"
   },

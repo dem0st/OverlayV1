@@ -101,8 +101,8 @@ npm start
 **Docker (удобно для VPS):**
 
 ```bash
-git clone https://github.com/dem0st/overlayv1.git
-cd overlayv1
+git clone https://github.com/dem0st/OverlayV1.git
+cd OverlayV1
 docker compose up -d
 ```
 
@@ -117,8 +117,8 @@ docker run -d --name overlayv1 -p 3000:3000 -v "$(pwd)/data:/data" overlayv1
 **Напрямую на Linux:**
 
 ```bash
-git clone https://github.com/dem0st/overlayv1.git
-cd overlayv1
+git clone https://github.com/dem0st/OverlayV1.git
+cd OverlayV1
 npm install --omit=dev
 node server.js
 ```
