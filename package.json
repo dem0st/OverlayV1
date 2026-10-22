@@ -28,8 +28,8 @@
   "scripts": {
     "start": "node server.js",
     "desktop": "electron .",
-    "dist": "electron-builder --win",
-    "dist:linux": "electron-builder --linux"
+    "dist": "electron-builder --win --publish never",
+    "dist:linux": "electron-builder --linux --publish never"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
@@ -45,6 +45,7 @@
   "build": {
     "appId": "com.overlaycontrol.app",
     "productName": "Overlay Control",
+    "publish": null,
     "directories": {
       "output": "dist",
       "buildResources": "build"
