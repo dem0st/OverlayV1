@@ -1,16 +1,16 @@
 [Unit]
-Description=Overlay Control — сервер оверлея для Twitch
+Description=OverlayV1 — сервер оверлея для Twitch
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=overlay
-WorkingDirectory=/opt/twitch-overlay
+WorkingDirectory=/opt/overlayv1
 Environment=NODE_ENV=production
 Environment=PORT=3000
-Environment=OVERLAY_DATA_DIR=/var/lib/twitch-overlay
-ExecStart=/usr/bin/node /opt/twitch-overlay/server.js
+Environment=OVERLAY_DATA_DIR=/var/lib/overlayv1
+ExecStart=/usr/bin/node /opt/overlayv1/server.js
 Restart=always
 RestartSec=5
 

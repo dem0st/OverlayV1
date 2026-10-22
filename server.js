@@ -90,7 +90,7 @@ const TTS_PROVIDERS = {
       const url = 'https://api.streamelements.com/kappa/v2/speech'
         + `?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`
         + (token ? '&key=' + encodeURIComponent(token) : '');
-      const res = await fetchWithTimeout(url, { headers: { 'User-Agent': 'OverlayV2/1.0' } });
+      const res = await fetchWithTimeout(url, { headers: { 'User-Agent': 'OverlayV1/1.0' } });
       if (res.status === 401) {
         throw new Error('StreamElements: проверь STREAMELEMENTS_TOKEN (overlay-токен из JWT)');
       }
@@ -1120,7 +1120,7 @@ function bootBanner() {
 
   console.log('');
   console.log('  ╔══════════════════════════════════════════════╗');
-  console.log('  ║          OVERLAY SERVER ЗАПУЩЕН              ║');
+  console.log('  ║              OVERLAYV1 ЗАПУЩЕН               ║');
   console.log('  ╚══════════════════════════════════════════════╝');
   console.log('');
   console.log(`  Оверлей (добавить в OBS):   http://localhost:${PORT}/overlay`);

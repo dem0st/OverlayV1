@@ -1,6 +1,6 @@
 {
-  "name": "twitch-overlay",
-  "version": "2.0.0",
+  "name": "overlayv1",
+  "version": "1.0.0",
   "description": "Панель модератора для Twitch-оверлеев: картинки, видео, сайты, текст, TTS и прямое управление OBS",
   "keywords": [
     "twitch",
@@ -15,12 +15,12 @@
   "author": "dem0st",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dem0st/twitch-overlay.git"
+    "url": "https://github.com/dem0st/overlayv1.git"
   },
   "bugs": {
-    "url": "https://github.com/dem0st/twitch-overlay/issues"
+    "url": "https://github.com/dem0st/overlayv1/issues"
   },
-  "homepage": "https://github.com/dem0st/twitch-overlay#readme",
+  "homepage": "https://github.com/dem0st/overlayv1#readme",
   "engines": {
     "node": ">=18"
   },
@@ -43,8 +43,8 @@
     "socket.io-client": "^4.8.3"
   },
   "build": {
-    "appId": "com.overlaycontrol.app",
-    "productName": "Overlay Control",
+    "appId": "com.overlayv1.app",
+    "productName": "OverlayV1",
     "publish": null,
     "directories": {
       "output": "dist",
@@ -72,7 +72,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Overlay Control"
+      "shortcutName": "OverlayV1"
     },
     "linux": {
       "target": [

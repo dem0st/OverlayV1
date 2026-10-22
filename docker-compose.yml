@@ -1,8 +1,8 @@
 services:
-  overlay:
+  overlayv1:
     build: .
-    image: overlay-control:latest
-    container_name: overlay-control
+    image: overlayv1:latest
+    container_name: overlayv1
     restart: unless-stopped
     ports:
       - "3000:3000"

@@ -130,7 +130,7 @@ function createPanelWindow(url) {
   panelWin = new BrowserWindow({
     width: 1440,
     height: 1000,
-    title: 'Overlay Control',
+    title: 'OverlayV1',
     autoHideMenuBar: true,
     backgroundColor: '#14141b',
     webPreferences: {
@@ -183,7 +183,26 @@ function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+/* После ребрендинга каталог данных называется OverlayV1. Копируем настройки
+   из старой папки twitch-overlay, чтобы не потерять сцену, токены и ключи. */
+function migrateLegacyData() {
+  if (!app.isPackaged || process.env.OVERLAY_DATA_DIR) return;
+  try {
+    const legacy = path.join(app.getPath('appData'), 'twitch-overlay');
+    const target = dataDir();
+    if (path.resolve(legacy) === path.resolve(target)) return;
+    if (!fs.existsSync(legacy)) return;
+    fs.mkdirSync(target, { recursive: true });
+    for (const name of ['config.json', '.token', 'tokens.json', 'presets.json', 'tts-keys.json']) {
+      const from = path.join(legacy, name);
+      const to = path.join(target, name);
+      if (fs.existsSync(from) && !fs.existsSync(to)) fs.copyFileSync(from, to);
+    }
+  } catch {}
+}
+
 app.whenReady().then(async () => {
+  migrateLegacyData();
   seedConfigIfNeeded();
   process.env.OVERLAY_DATA_DIR = dataDir();
   const cfg = readJson(dataPath('config.json'), readJson(CONFIG_FILE, {}));

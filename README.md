@@ -1,12 +1,12 @@
 <div align="center">
 
-# Overlay Control
+# OverlayV1
 
 **Панель модератора для Twitch-оверлеев: картинки, видео, сайты, текст, TTS и прямое управление OBS.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](LICENSE)
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-3FAE52)
-![Platform](https://img.shields.io/badge/platform-Windows-0078D4)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-0078D4)
 
 </div>
 
@@ -68,14 +68,14 @@
 
 **Ещё**
 - Тёмная и светлая тема панели.
-- Готовый установщик для Windows (NSIS) + запуск из исходников одной командой.
+- Готовые сборки: Windows (NSIS), Linux (AppImage / deb) — плюс запуск из исходников одной командой.
 - Панель открывается с любого устройства в локальной сети.
 
 ## Быстрый старт
 
 ### Установщик (Windows)
 
-1. Скачай `Overlay Control Setup.exe` из [Releases](../releases).
+1. Скачай `OverlayV1 Setup.exe` из [Releases](../releases).
 2. Запусти и установи.
 3. Приложение само поднимет сервер и откроет панель.
 
@@ -101,8 +101,8 @@ npm start
 **Docker (удобно для VPS):**
 
 ```bash
-git clone https://github.com/dem0st/twitch-overlay.git
-cd twitch-overlay
+git clone https://github.com/dem0st/overlayv1.git
+cd overlayv1
 docker compose up -d
 ```
 
@@ -110,26 +110,26 @@ docker compose up -d
 Без compose:
 
 ```bash
-docker build -t overlay-control .
-docker run -d --name overlay -p 3000:3000 -v "$(pwd)/data:/data" overlay-control
+docker build -t overlayv1 .
+docker run -d --name overlayv1 -p 3000:3000 -v "$(pwd)/data:/data" overlayv1
 ```
 
 **Напрямую на Linux:**
 
 ```bash
-git clone https://github.com/dem0st/twitch-overlay.git
-cd twitch-overlay
+git clone https://github.com/dem0st/overlayv1.git
+cd overlayv1
 npm install --omit=dev
 node server.js
 ```
 
 или `./start.sh` — скрипт сам поставит зависимости.
 
-**Системный сервис systemd** — готовый юнит в [`deploy/twitch-overlay.service`](deploy/twitch-overlay.service):
+**Системный сервис systemd** — готовый юнит в [`deploy/overlayv1.service`](deploy/overlayv1.service):
 
 ```bash
-sudo cp deploy/twitch-overlay.service /etc/systemd/system/
-sudo systemctl enable --now twitch-overlay
+sudo cp deploy/overlayv1.service /etc/systemd/system/
+sudo systemctl enable --now overlayv1
 ```
 
 Если OBS стоит на другом компьютере — в источнике «Браузер» указывай адрес сервера:
@@ -171,7 +171,7 @@ cloudflared tunnel --url http://localhost:3000
 
 ## Конфигурация
 
-Всё хранится рядом с приложением (для установленной версии — `%APPDATA%\twitch-overlay`):
+Всё хранится рядом с приложением (для установленной версии — `%APPDATA%\OverlayV1`):
 
 | Файл | Что внутри |
 |---|---|
