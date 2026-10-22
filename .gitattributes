@@ -2,6 +2,7 @@
 
 *.bat text eol=crlf
 *.cmd text eol=crlf
+*.sh text eol=lf
 *.ico binary
 *.png binary
 *.exe binary

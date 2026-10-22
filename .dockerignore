@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.github
+.gitignore
+.gitattributes
+data
+docs
+build
+*.log
+*.md
+Dockerfile
+docker-compose.yml
+start.bat
+start-desktop.bat

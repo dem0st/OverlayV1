@@ -1,0 +1,14 @@
+services:
+  overlay:
+    build: .
+    image: overlay-control:latest
+    container_name: overlay-control
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      PORT: "3000"
+      # Токен панели можно задать здесь, иначе он сгенерируется в /data/.token
+      # CONTROL_TOKEN: "замени-на-свой"

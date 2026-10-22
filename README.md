@@ -94,6 +94,47 @@ npm start
 В локальной сети:           http://192.168.0.13:3000/control?t=<токен>   (Wi-Fi)
 ```
 
+### Linux и Docker
+
+Сервер — обычный Node.js, на Linux запускается как есть.
+
+**Docker (удобно для VPS):**
+
+```bash
+git clone https://github.com/dem0st/twitch-overlay.git
+cd twitch-overlay
+docker compose up -d
+```
+
+Панель: `http://<IP-сервера>:3000/control?t=<токен>`, токен лежит в `data/.token`.
+Без compose:
+
+```bash
+docker build -t overlay-control .
+docker run -d --name overlay -p 3000:3000 -v "$(pwd)/data:/data" overlay-control
+```
+
+**Напрямую на Linux:**
+
+```bash
+git clone https://github.com/dem0st/twitch-overlay.git
+cd twitch-overlay
+npm install --omit=dev
+node server.js
+```
+
+или `./start.sh` — скрипт сам поставит зависимости.
+
+**Системный сервис systemd** — готовый юнит в [`deploy/twitch-overlay.service`](deploy/twitch-overlay.service):
+
+```bash
+sudo cp deploy/twitch-overlay.service /etc/systemd/system/
+sudo systemctl enable --now twitch-overlay
+```
+
+Если OBS стоит на другом компьютере — в источнике «Браузер» указывай адрес сервера:
+`http://<IP-сервера>:3000/overlay`.
+
 ### Подключение в OBS
 
 1. Источники → **+** → **Браузер**
@@ -174,10 +215,11 @@ npm install
 npm start        # сервер + панель на :3000
 npm run desktop  # десктопное приложение (Electron)
 npm run dist     # сборка установщика Windows → dist/
+npm run dist:linux   # сборка AppImage + deb для Linux (нужен Linux)
 ```
 
 Стек: Node.js + Express + Socket.IO, фронтенд — ванильный HTML/CSS/JS, десктоп —
-Electron, сборка — electron-builder (NSIS).
+Electron, сборка — electron-builder (NSIS / AppImage / deb).
 
 Структура:
 
@@ -188,6 +230,10 @@ public/control.html    панель модератора
 public/help.html       памятка по настройке
 electron/main.js       обёртка Electron
 build/                 иконки приложения
+Dockerfile             сборка образа для Linux
+docker-compose.yml     запуск в один docker compose up
+deploy/                systemd-юнит
+start.sh / start.bat   запуск в один клик
 ```
 
 ## Лицензия

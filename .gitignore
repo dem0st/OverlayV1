@@ -10,6 +10,7 @@ config.example.json.bak
 presets.json
 tokens.json
 .token
+data/
 
 # логи
 *.log

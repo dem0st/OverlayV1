@@ -1,0 +1,18 @@
+[Unit]
+Description=Overlay Control — сервер оверлея для Twitch
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=overlay
+WorkingDirectory=/opt/twitch-overlay
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=OVERLAY_DATA_DIR=/var/lib/twitch-overlay
+ExecStart=/usr/bin/node /opt/twitch-overlay/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

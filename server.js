@@ -1044,11 +1044,27 @@ function lanAddresses() {
 /* на Windows подписываем адреса именем адаптера и отделяем реальные (Wi-Fi/Ethernet)
    от виртуальных (VirtualBox, Hyper-V, VPN) — реальные печатаем первыми */
 function lanEntries() {
-  const ips = lanAddresses();
   if (process.platform !== 'win32') {
-    return ips.map((address) => ({ address, name: '', virtual: false, linkLocal: address.startsWith('169.254.') }));
+    // Linux/macOS: ключ os.networkInterfaces() — это имя интерфейса (eth0, wlan0, docker0...)
+    const entries = [];
+    for (const [name, list] of Object.entries(os.networkInterfaces())) {
+      for (const ni of list || []) {
+        if (ni.family !== 'IPv4' || ni.internal) continue;
+        entries.push({
+          address: ni.address,
+          name,
+          desc: '',
+          wifi: /^(wl|wlan|wlp)/i.test(name),
+          virtual: /^(lo|docker|veth|br-|virbr|vmnet|vboxnet|vnic|tun|tap|zt|wg|ham|cni|flannel|kube|utun|ppp|sl)/i.test(name),
+          linkLocal: ni.address.startsWith('169.254.'),
+        });
+      }
+    }
+    const rank = (e) => (e.linkLocal ? 2 : e.virtual ? 1 : 0);
+    return entries.sort((a, b) => rank(a) - rank(b));
   }
 
+  const ips = lanAddresses();
   let rows = [];
   try {
     const script = [
