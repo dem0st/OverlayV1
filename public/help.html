@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c3aed'/%3E%3Crect x='7' y='9' width='18' height='12' rx='3' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Ccircle cx='16' cy='15' r='2.5' fill='%23fff'/%3E%3C/svg%3E">
+<title>Справка — что куда вставлять</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #14141b;
+      color: #e8e8ef;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; padding: 16px 20px 28px; }
+    h1 { font-size: 18px; margin: 0 0 4px; color: #fff; }
+    .sub { color: #9aa0b0; font-size: 12.5px; margin: 0 0 16px; }
+    .card {
+      background: #1d1d27;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .card h2 { font-size: 14px; margin: 0 0 6px; color: #ffd166; }
+    .card p { margin: 4px 0; }
+    .card .step { color: #c7cad5; }
+    .card code {
+      display: inline-block;
+      background: #28283a;
+      border: 1px solid #33334a;
+      border-radius: 5px;
+      padding: 1px 7px;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      color: #8fd3ff;
+    }
+    a { color: #7fc5ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .row-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 6px;
+      padding: 7px 10px;
+      background: #232330;
+      border: 1px solid #2f2f40;
+      border-radius: 7px;
+    }
+    .row-link code { background: none; border: none; padding: 0; overflow-wrap: anywhere; }
+    .arrow { color: #7fc5ff; }
+    .tip {
+      margin-top: 14px;
+      background: #1c2a22;
+      border: 1px solid #2c4636;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #bcd6c4;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Что куда вставлять</h1>
+    <p class="sub">Быстрая памятка по настройке оверлея</p>
+
+    <div class="card">
+      <h2>1. Оверлей в OBS</h2>
+      <p class="step">В OBS добавь источник «Браузер» и вставь туда адрес оверлея:</p>
+      <div class="row-link">
+        <code>http://localhost:3000/overlay</code>
+        <span class="arrow">для OBS</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Токен панели</h2>
+      <p class="step">Вставлять никуда не надо — он уже в панели. Показать/скрыть и скопировать можно кнопкой
+      рядом с адресом панели в верхней шапке. Лежит также в файле <code>.token</code> рядом с приложением.</p>
+    </div>
+
+    <div class="card">
+      <h2>3. Пароль OBS WebSocket</h2>
+      <p class="step">В OBS: <b>Сервис → Настройки WebSocket</b> — включи сервер WebSocket и задай пароль.
+      Этот пароль потом вставь в панели в карточку <b>OBS</b>.</p>
+    </div>
+
+    <div class="card">
+      <h2>4. Ключ StreamElements (озвучка алертов)</h2>
+      <p class="step">Включи «Озвучку» в панели, затем в карточке <b>Ключи TTS</b> вставь API-токен StreamElements:</p>
+      <div class="row-link">
+        <code>streamer.streamelements.com / Авторизация</code>
+        <a href="https://streamelements.com/dashboard/account/channels" target="_blank">Страница токенов &#10132;</a>
+      </div>
+      <p class="step" style="margin-top:6px">Аккаунт должен быть привязан к твоему Twitch. Токен для TTS — это
+      <b>JWT (overlay-токен)</b> из раздела API-токенов в канале.</p>
+    </div>
+
+    <div class="card">
+      <h2>5. Ключ ElevenLabs</h2>
+      <p class="step">Если голос StreamElements не нравится — вставь API-ключ ElevenLabs в ту же карточку
+      <b>Ключи TTS</b> и выбери провайдера на главном экране панели:</p>
+      <div class="row-link">
+        <code>elevenlabs.io / Профиль / API Keys</code>
+        <a href="https://elevenlabs.io/settings/api-keys" target="_blank">Страница ключей &#10132;</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>6. Старая панель / config.json</h2>
+      <p class="step">Если у тебя остался <code>config.json</code> от прошлой версии — импортируй его прямо из панели:</p>
+      <p class="step"><b>Настройки (config.json) → Импортировать config.json</b> — канал, OBS, чат и сцена перенесутся.</p>
+    </div>
+
+    <div class="tip">
+      Подсказка: сцена загружается с <code>http://localhost:3000/overlay</code>. После смены пароля OBS
+      переподключение происходит автоматически; панель перезагружается по <b>Ctrl+R</b> или из меню
+      «Открыть → Перезагрузить панель».
+    </div>
+  </div>
+</body>
+</html>

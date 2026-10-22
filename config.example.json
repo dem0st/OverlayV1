@@ -1,0 +1,20 @@
+{
+  "port": 3000,
+  "channel": "",
+  "obs": {
+    "enabled": false,
+    "host": "localhost",
+    "port": 4455,
+    "password": ""
+  },
+  "tts": {
+    "provider": "streamelements",
+    "voice": "Tatyana",
+    "volume": 100,
+    "showText": true
+  },
+  "ui": {
+    "ttsOnboarded": false
+  },
+  "sources": []
+}

@@ -1,0 +1,1669 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* Приложение живёт в пределах окна: страница не прокручивается,
+   инструменты листаются в своей колонке, холст всегда на своём месте. */
+body {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: background 0.25s, color 0.25s;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--card-border);
+  flex: 0 0 auto;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.logo span {
+  color: var(--accent);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+#token-view {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 6px;
+  padding: 4px 9px;
+  cursor: pointer;
+  user-select: all;
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#token-view:hover {
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--text);
+}
+
+#token-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.on { background: #00c853; box-shadow: 0 0 10px #00c853; }
+.dot.off { background: #d32f2f; box-shadow: 0 0 10px #d32f2f; }
+
+/* ---------- Карточки ---------- */
+
+main {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 1760px;
+  margin: 0 auto 0 0;
+  padding: 26px 20px 26px 12px;
+  display: grid;
+  grid-template-columns: minmax(340px, 390px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+/* Инструменты/настройки — левая панель, узкая, сворачивается.
+   Свой ползунок прокрутки: страница за колонкой не ездит. */
+.side-col {
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 6px;
+}
+
+/* Карточки не сжимаются, иначе колонка не прокручивается, а сжимается */
+.side-col > * {
+  flex: 0 0 auto;
+}
+
+/* Ползунок прокрутки инструментов: тонкий, тематический, рельсф только при наведении.
+   Стандартные scrollbar-width/scrollbar-color здесь намеренно не используются —
+   в Chromium они отключают ::-webkit-scrollbar-правила. */
+.side-col::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.side-col::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.side-col:hover::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border-radius: 999px;
+}
+
+.side-col::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+  transition: background-color 0.15s ease;
+}
+
+.side-col:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 38%, transparent);
+}
+
+.side-col::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.side-col::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Сцена: холст оверлея на всю высоту окна, ничего не прокручивается */
+#scene-card {
+  position: static;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#scene-card > h2,
+#scene-card > .row {
+  flex: 0 0 auto;
+}
+
+/* Кнопка «Скрыть инструменты» */
+#tools-toggle {
+  white-space: nowrap;
+}
+
+/* Панель инструментов скрыта — сцена растягивается на всю ширину */
+body.tools-hidden .side-col {
+  display: none;
+}
+
+body.tools-hidden main {
+  grid-template-columns: 1fr;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card.wide {
+  grid-column: 1 / -1;
+}
+
+.card h2 {
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card h2 .collapse {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: #1b1b25;
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.18s ease, background 0.15s, color 0.15s;
+}
+
+.card h2 .collapse:hover {
+  background: #262633;
+  color: var(--accent-hover);
+}
+
+.card.collapsed .collapse {
+  transform: rotate(-90deg);
+}
+
+.card.collapsed > *:not(h2) {
+  display: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+label {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+label small {
+  color: var(--muted);
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.row > p {
+  flex: 1;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- Инпуты ---------- */
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+select,
+textarea {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.4;
+}
+
+input[type="color"] {
+  width: 100%;
+  height: 41px;
+  padding: 4px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+}
+
+input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+
+/* ---------- Форма добавления ---------- */
+
+.add-grid {
+  display: grid;
+  grid-template-columns: 170px 1fr 150px 130px auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .add-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .add-grid .grow {
+    grid-column: span 2;
+  }
+}
+
+.add-grid .check {
+  padding-bottom: 11px;
+}
+
+/* ---------- Кнопки ---------- */
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.08s, filter 0.15s, background 0.15s;
+  color: var(--text);
+  background: var(--input-border);
+}
+
+.btn:hover { filter: brightness(1.15); }
+.btn:active { transform: scale(0.97); }
+
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.danger { background: #8b2230; color: #fff; }
+.btn.ghost { background: transparent; border: 1px solid var(--btn-border); }
+.btn.small { padding: 7px 12px; font-size: 12.5px; }
+
+.btn.flash-ok {
+  background: #00c853 !important;
+  filter: none;
+}
+
+/* Сцена-редактор */
+
+.stage-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: safe center;
+  container-type: size;
+  overflow: hidden;
+}
+
+/* При зуме > 100% приближённый холст листается внутри рамки сцены */
+.stage-wrap.zoomed {
+  overflow: auto;
+}
+
+.stage-wrap::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.stage-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stage-wrap::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+.stage-wrap::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text) 38%, transparent);
+}
+
+/* Холст держит 16:9 и вписывается в свободную высоту по меньшей стороне.
+   --zoom масштабирует его ширину (layout, а не transform — превью и
+   координаты в % остаются точными). */
+#stage {
+  position: relative;
+  width: calc(min(100cqw, 100cqh * 16 / 9) * var(--zoom, 1));
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: visible;
+  background:
+    repeating-conic-gradient(#15151d 0% 25%, #101018 0% 50%) 0 0 / 24px 24px;
+}
+
+/* Плашка масштаба в строке сцены */
+.zoom-pct,
+#zoom-pct {
+  min-width: 58px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Во время перетаскивания окон инструменты не прокручиваются —
+   иначе колонка уезжает и холст визуально смещается */
+html.editor-dragging .side-col {
+  overflow-y: hidden;
+}
+
+.stage-item,
+.obs-item {
+  touch-action: none;
+  user-select: none;
+}
+
+#preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* Границы холста: превью работает в режиме редактора (?edit=1),
+   где холст занимает 72% превью, остальное — поле для вынесенных окон */
+#scene-frame {
+  position: absolute;
+  left: 14%;
+  top: 14%;
+  width: 72%;
+  height: 72%;
+  border: 3px dashed color-mix(in srgb, var(--accent) 90%, transparent);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#scene-frame span {
+  position: absolute;
+  top: -12px;
+  left: 10px;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent-text);
+  background: var(--input-bg);
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* Интерактивные рамки окон позиционируются в координатах холста
+   (той же области, в которой оверлей рисует окна) — хитбокс совпадает с показом */
+#boxes {
+  position: absolute;
+  left: 14%;
+  top: 14%;
+  width: 72%;
+  height: 72%;
+  overflow: visible;
+  z-index: 3;
+}
+
+.stage-item {
+  position: absolute;
+  border: 2px solid color-mix(in srgb, var(--accent) 90%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  cursor: move;
+  min-width: 26px;
+  min-height: 22px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.stage-item:hover,
+.stage-item.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: var(--accent-hover);
+}
+
+.stage-item.active {
+  will-change: left, top, width, height;
+  transform: translateZ(0);
+}
+
+.stage-item.selected {
+  border-color: #ffffff;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: 0 0 0 2px #fff, 0 0 16px color-mix(in srgb, var(--accent) 85%, transparent);
+}
+
+/* выделенный источник поверх всех, остальные в тени */
+#obs-stage.has-selection::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+#obs-stage.has-selection .obs-item:not(.selected) {
+  opacity: 0.28;
+  filter: saturate(0.4);
+  border-color: rgba(130, 130, 145, 0.5);
+  background: rgba(130, 130, 145, 0.06);
+}
+
+#obs-stage.has-selection .obs-item.selected {
+  opacity: 1;
+  filter: none;
+  border: 2px solid #ffffff;
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  z-index: 50;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--text) 80%, transparent),
+    0 10px 32px 4px rgba(0, 0, 0, 0.55),
+    0 0 24px color-mix(in srgb, var(--accent) 90%, transparent);
+  animation: obsRise 0.22s ease-out;
+}
+
+@keyframes obsRise {
+  from {
+    transform: scale(0.965);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--text) 60%, transparent), 0 0 34px var(--accent);
+  }
+  to {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 80%, transparent), 0 10px 32px 4px rgba(0, 0, 0, 0.55), 0 0 24px color-mix(in srgb, var(--accent) 90%, transparent);
+  }
+}
+
+#obs-stage.has-selection .obs-item.selected .tag {
+  color: #ffffff;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.obs-item.selected {
+  z-index: 50;
+}
+
+.stage-item.hidden-src {
+  opacity: 0.35;
+}
+
+.stage-item .tag {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 22px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(8, 8, 14, 0.72);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--accent-text);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* у текста первая строка идёт от верхнего края — подпись уводим вниз */
+.stage-item.is-text .tag {
+  top: auto;
+  bottom: 2px;
+}
+
+.stage-item .handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 13px;
+  height: 13px;
+  background: var(--accent);
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  cursor: nwse-resize;
+}
+
+.stage-item .del {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 17px;
+  height: 17px;
+  background: #d32f2f;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 13px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.stage-item .del:hover {
+  background: #ff5252;
+}
+
+.empty-note {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #55555f;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* ---------- Гейт токена ---------- */
+
+#gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 10, 14, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#gate.hidden { display: none; }
+
+.gate-box {
+  width: min(420px, 90vw);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 34px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+}
+
+.gate-box h1 {
+  font-size: 24px;
+  letter-spacing: 3px;
+}
+
+.gate-box h1::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  margin: 12px auto 0;
+}
+
+.gate-box p {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.gate-box code {
+  color: var(--accent);
+  background: var(--input-bg);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+#gate-error {
+  color: #ff6b6b;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+/* ---------- Свойства источника ---------- */
+
+#props-card[hidden] {
+  display: none;
+}
+
+.props-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.props-group {
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  margin: 0;
+}
+
+.props-group legend {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-hover);
+  padding: 0 8px;
+}
+
+.props-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.props-grid .grow {
+  grid-column: 1 / -1;
+}
+
+.props-grid .grow input {
+  font-size: 15px;
+}
+
+.crop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.layer-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 1000px) {
+  .props-grid,
+  .crop-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .props-grid .grow {
+    grid-column: span 2;
+  }
+  .layer-row {
+    grid-column: span 2;
+  }
+}
+
+.scale-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.props-actions {
+  display: flex;
+  gap: 10px;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---------- OBS Studio ---------- */
+
+.obs-connect-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.obs-st {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.obs-connect-grid {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .obs-connect-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+#obs-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#obs-stage-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 14px;
+}
+
+.obs-main-row {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .obs-main-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.obs-stage-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#obs-stage {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  border-radius: 12px;
+  background:
+    repeating-conic-gradient(#15151d 0% 25%, #101018 0% 50%) 0 0 / 24px 24px;
+}
+
+.obs-sources-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.obs-sources-head {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+color: var(--accent-hover);
+}
+
+.obs-sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 8px;
+  background: #14141b;
+}
+
+.obs-sources-list:empty {
+  display: none;
+}
+
+.obs-src-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.obs-src-row:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.obs-src-row.selected {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+  transform: translateX(2px);
+}
+
+.obs-src-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obs-src-row.hidden-src .obs-src-name {
+  color: var(--muted);
+}
+
+.obs-src-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: var(--input-border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.obs-src-btn:hover {
+  background: var(--btn-border);
+}
+
+.obs-src-btn.danger:hover {
+  background: #d32f2f;
+}
+
+.obs-src-btn.vis-off {
+  color: var(--muted);
+}
+
+.obs-sources-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+#obs-frame {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed color-mix(in srgb, var(--accent) 75%, transparent);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#obs-frame span {
+  position: absolute;
+  bottom: -10px;
+  left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent-text);
+  background: var(--input-bg);
+  padding: 0 8px;
+  border-radius: 6px;
+}
+
+#obs-boxes {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+.obs-item .vis {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 17px;
+  height: 17px;
+  background: var(--input-border);
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 13px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.obs-item.hidden-src .vis {
+  color: var(--muted);
+}
+
+.obs-item .obs-del {
+  top: -8px;
+  right: -8px;
+}
+
+.obs-item .obs-lock {
+  top: -8px;
+  left: 14px;
+}
+
+.obs-item.locked {
+  border-style: dashed;
+  border-color: #f2c94c;
+  opacity: 0.85;
+}
+
+.obs-item.locked .handle {
+  display: none;
+}
+
+.obs-item.snap-x,
+.obs-item.snap-y {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 90%, transparent), 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.obs-src-row.locked .obs-src-name {
+  color: #f2c94c;
+}
+
+.obs-src-btn.locked-on {
+  color: #f2c94c;
+}
+
+.obs-src-btn svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.obs-src-hint {
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid var(--btn-border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+}
+
+.chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.obs-add-row {
+  display: flex;
+  gap: 12px;
+}
+
+.obs-add-row input {
+  flex: 1;
+}
+
+/* ---------- Озвучка (TTS) ---------- */
+.tts-grid {
+  display: grid;
+  grid-template-columns: 1fr 240px 260px 180px auto auto auto;
+  gap: 12px;
+  align-items: end;
+}
+.tts-grid .grow {
+  grid-column: 1 / -1;
+}
+.tts-grid .check {
+  padding-bottom: 11px;
+}
+.tts-grid .scale-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#tts-status:empty {
+  display: none;
+}
+#tts-status.error {
+  color: #ff6b6b;
+}
+
+/* Ключи TTS */
+.tts-keys {
+  margin-top: 12px;
+  border-top: 1px dashed color-mix(in srgb, var(--text) 14%, transparent);
+  padding-top: 12px;
+}
+
+.tts-keys-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tts-key-row {
+  display: grid;
+  grid-template-columns: 150px 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.tts-key-name {
+  font-weight: 600;
+  color: #c9c9d6;
+  white-space: nowrap;
+}
+
+.tts-key-status {
+  font-size: 12.5px;
+  color: #6ee7a0;
+  white-space: nowrap;
+}
+
+.tts-key-status.error {
+  color: #ff6b6b;
+}
+
+/* Импорт config.json */
+.import-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+#import-status.error {
+  color: #ff6b6b;
+}
+
+/* Онбординг при первом запуске */
+#onboard {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 8, 12, 0.75);
+}
+
+#onboard.hidden {
+  display: none;
+}
+
+.gate-box.onboarding {
+  max-width: 460px;
+  text-align: center;
+}
+
+.onboard-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .tts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tts-grid .grow {
+    grid-column: span 2;
+  }
+  .tts-key-row {
+    grid-template-columns: 1fr auto;
+  }
+  .tts-key-status {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 1120px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+  #scene-card {
+    position: static;
+    height: auto;
+  }
+  /* в сложенной вёрстке сцене нужна своя высота, иначе холст сжимается в точку */
+  #scene-card .stage-wrap {
+    height: 54vh;
+    min-height: 260px;
+  }
+}
+
+/* ---------- Узкая панель инструментов: компактные сетки ---------- */
+
+/* Обёртки оверлея и сетки карточек перестраиваются на 2 колонки независимо от ширины экрана */
+.side-col {
+  flex: none;
+}
+.side-col .add-grid,
+.side-col .tts-grid,
+.side-col .obs-connect-grid,
+.side-col .props-grid,
+.side-col .crop-grid {
+  grid-template-columns: 1fr 1fr;
+}
+.side-col .add-grid .grow,
+.side-col .tts-grid .grow,
+.side-col .props-grid .grow {
+  grid-column: 1 / -1;
+}
+.side-col .obs-connect-grid .btn {
+  grid-column: 1 / -1;
+}
+.side-col .add-grid #add-source {
+  grid-column: 1 / -1;
+}
+.side-col .obs-main-row {
+  grid-template-columns: 1fr;
+}
+.side-col .tts-key-row {
+  grid-template-columns: 1fr auto;
+}
+.side-col .tts-key-name {
+  white-space: normal;
+}
+.side-col .tts-key-status {
+  grid-column: 2;
+}
+.side-col .props-actions,
+.side-col .layer-row {
+  flex-wrap: wrap;
+}
+.side-col .preset-row {
+  grid-template-columns: 1fr auto;
+}
+.side-col .role-row {
+  grid-template-columns: 1fr;
+}
+.side-col h2 {
+  overflow-wrap: anywhere;
+}
+.side-col .btn {
+  white-space: normal;
+}
+
+/* Компактные шрифты и отступы узкой панели: в 350px всё должно
+   вставать спокойно, без обрезанных лейблов и горизонтального скролла */
+.side-col .card {
+  padding: 16px;
+  gap: 8px;
+}
+.side-col .card h2 {
+  font-size: 14px;
+  letter-spacing: 1.2px;
+  margin-bottom: 2px;
+}
+.side-col label {
+  font-size: 12.5px;
+}
+.side-col .hint {
+  font-size: 12px;
+}
+.side-col input[type="text"],
+.side-col input[type="number"],
+.side-col input[type="password"],
+.side-col select,
+.side-col textarea {
+  font-size: 13px;
+  padding: 8px 10px;
+}
+.side-col input[type="color"] {
+  height: 36px;
+}
+.side-col .btn {
+  font-size: 13px;
+  padding: 9px 14px;
+}
+.side-col .btn.small {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+.side-col .row {
+  gap: 8px;
+}
+
+/* ---------- Выбор темы ---------- */
+
+.theme-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.theme-row select {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.theme-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.theme-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  outline: 1px solid var(--card-border);
+  cursor: pointer;
+  padding: 0;
+}
+
+.theme-dot.active {
+  border-color: var(--text);
+  outline-color: transparent;
+}
+
+/* ================= Темы панели ================= */
+
+:root,
+[data-theme="classic"] {
+  --bg: #0e0e13;
+  --card: #17171f;
+  --card-border: #23232e;
+  --input-bg: #0e0e13;
+  --input-border: #2c2c39;
+  --btn-border: #3a3a49;
+  --text: #efeff1;
+  --muted: #6e6e7a;
+  --text-soft: #a7a7b3;
+  --text-dim: #9a9aa8;
+  --accent: #9146ff;
+  --accent-hover: #b585ff;
+  --accent-text: #c9b4ff;
+}
+
+[data-theme="ocean"] {
+  --bg: #0b0e14;
+  --card: #121826;
+  --card-border: #1f2940;
+  --input-bg: #0a0e18;
+  --input-border: #24324f;
+  --btn-border: #31405f;
+  --text: #e8eefc;
+  --muted: #7b869c;
+  --text-soft: #9aa7c2;
+  --text-dim: #8b96ad;
+  --accent: #2f86e0;
+  --accent-hover: #5aa8f5;
+  --accent-text: #9cc8ff;
+}
+
+[data-theme="light"] {
+  --bg: #f2f2f6;
+  --card: #ffffff;
+  --card-border: #e0e0ea;
+  --input-bg: #ffffff;
+  --input-border: #d4d4e0;
+  --btn-border: #c7c7d4;
+  --text: #20202b;
+  --muted: #6e6e7d;
+  --text-soft: #565663;
+  --text-dim: #84848f;
+  --accent: #7c3aed;
+  --accent-hover: #9146ff;
+  --accent-text: #7c3aed;
+}
+
+/* в светлой теме холст и список источников OBS — не тёмные пятна */
+[data-theme="light"] #stage,
+[data-theme="light"] #obs-stage {
+  background: repeating-conic-gradient(#ececf4 0% 25%, #f8f8fc 0% 50%) 0 0 / 24px 24px;
+}
+
+[data-theme="light"] .obs-sources-list {
+  background: var(--input-bg);
+}
+
+[data-theme="forest"] {
+  --bg: #0b1210;
+  --card: #101916;
+  --card-border: #223129;
+  --input-bg: #091009;
+  --input-border: #2b3d32;
+  --btn-border: #3a5145;
+  --text: #e6f3ec;
+  --muted: #73917f;
+  --text-soft: #96b3a0;
+  --text-dim: #86a090;
+  --accent: #3ecf7a;
+  --accent-hover: #6fe09c;
+  --accent-text: #8ff0b4;
+}
+
+/* Плавный переход цветов при смене темы */
+.card,
+header,
+input[type="text"],
+input[type="number"],
+input[type="password"],
+select,
+textarea,
+input[type="color"],
+.btn,
+.stage-item,
+#token-view {
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+/* ============ ����� ����: ���������, �������, �������, ���� ============ */
+
+/* ����� ������������ ��� �������������� ��������� */
+.snap-guides {
+  position: absolute;
+  inset: 0;
+  z-index: 3000;
+  pointer-events: none;
+}
+
+.guide-v,
+.guide-h {
+  position: absolute;
+  display: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.guide-v {
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed var(--accent);
+}
+
+.guide-h {
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--accent);
+}
+
+.stage-item.snap-x,
+.stage-item.snap-y {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 90%, transparent), 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* ������ ���������� ������: ��������� + ������� + ������� */
+#scene-card .row {
+  flex-wrap: wrap;
+}
+
+.scene-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#undo-btn[disabled],
+#redo-btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ����� ���� � ����� */
+.role-badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+body[data-role="streamer"] .role-badge {
+  border-color: color-mix(in srgb, #f2c94c 55%, transparent);
+  background: color-mix(in srgb, #f2c94c 16%, transparent);
+  color: #f2c94c;
+}
+
+/* ������� ����� */
+.presets-save-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.presets-save-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preset-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--input-bg) 55%, transparent);
+}
+
+.preset-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+
+.preset-meta {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#preset-status:empty {
+  display: none;
+}
+
+#preset-status.error {
+  color: #ff6b6b;
+}
+
+/* ���� � ������ */
+.roles-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-row {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) minmax(130px, auto) 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--input-bg) 55%, transparent);
+}
+
+.role-name {
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.role-token {
+  font-size: 12.5px;
+  color: var(--accent-text);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  overflow-wrap: anywhere;
+}
+
+.role-perm {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.roles-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- ������ �� ����� ---------- */
+
+/* �������: ���������, ������� � ����� OBS � ��� ������ ����� � �������� */
+body[data-role="streamer"] #add-card,
+body[data-role="streamer"] #presets-card,
+body[data-role="streamer"] #settings-card,
+body[data-role="streamer"] #roles-card,
+body[data-role="streamer"] #props-card,
+body[data-role="streamer"] .tts-keys,
+body[data-role="streamer"] .snap-toggle,
+body[data-role="streamer"] #clear-sources,
+body[data-role="streamer"] #undo-btn,
+body[data-role="streamer"] #redo-btn,
+body[data-role="streamer"] .obs-add-row,
+body[data-role="streamer"] #obs-disconnect,
+body[data-role="streamer"] #obs-card > fieldset,
+body[data-role="streamer"] .obs-reorder,
+body[data-role="streamer"] .obs-lock,
+body[data-role="streamer"] .obs-del {
+  display: none;
+}
+
+body[data-role="streamer"] #boxes .stage-item {
+  pointer-events: none;
+}
+
+/* ���������: ��� ��������, ����� � ����� ������ */
+body[data-role="moderator"] #settings-card,
+body[data-role="moderator"] #roles-card,
+body[data-role="moderator"] .tts-keys,
+body[data-role="moderator"] #obs-disconnect,
+body[data-role="moderator"] #obs-card > fieldset {
+  display: none;
+}
+
+@media (max-width: 1120px) {
+  .preset-row {
+    grid-template-columns: 1fr auto;
+  }
+  .role-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,22 @@
+# зависимости
+node_modules/
+
+# сборка
+dist/
+
+# рабочие данные и секреты (создаются автоматически)
+config.json
+config.example.json.bak
+presets.json
+tokens.json
+.token
+
+# логи
+*.log
+boot.log
+
+# OS / редакторы
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

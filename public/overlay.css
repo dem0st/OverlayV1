@@ -1,0 +1,135 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#sources {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Геометрия холста в редакторе — единый источник правды
+   для источников, сообщений и рамки в панели. */
+:root {
+  --cv-left: 14%;
+  --cv-top: 14%;
+  --cv-width: 72%;
+  --cv-height: 72%;
+}
+
+/* Режим редактора (?edit=1): холст — рабочая область с полями.
+   Окна, вынесенные за границы холста, остаются видимыми (как в OBS-редакторе). */
+body.edit #sources {
+  position: absolute;
+  left: var(--cv-left);
+  top: var(--cv-top);
+  width: var(--cv-width);
+  height: var(--cv-height);
+  overflow: visible;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+body.edit {
+  background: rgba(16, 16, 24, 0.5);
+}
+
+.source-item {
+  position: absolute;
+  animation: sourceIn 0.3s ease;
+}
+
+.source-item > img,
+.source-item > video,
+.source-item > iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+  background: transparent;
+  transform-origin: center center;
+}
+
+/* Текстовый источник: шрифт задан в пикселях на холсте 1080 и
+   масштабируется от высоты окна (в edit-режиме холст = 72% окна). */
+.source-item > .src-text {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.3;
+  font-family: inherit;
+  transform-origin: center center;
+  font-size: calc(var(--ts, 48) * 100vh / 1080);
+}
+
+body.edit .source-item > .src-text {
+  font-size: calc(var(--ts, 48) * 72vh / 1080);
+}
+
+@keyframes sourceIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Сообщения по центру сверху. Верхний край отсчитывается от 4% высоты холста,
+   поэтому высокий текст не вылезает за верхнюю границу. */
+#message-area {
+  position: fixed;
+  top: 4%;
+  left: 50%;
+  transform: translate(-50%, 0) scale(0.9);
+  max-width: 80%;
+  padding: 18px 40px;
+  background: rgba(10, 10, 16, 0.78);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+  z-index: 99999;
+}
+
+#message-area.show {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+  visibility: visible;
+}
+
+#message-area.alert {
+  background: rgba(160, 20, 40, 0.85);
+  border-color: rgba(255, 160, 180, 0.9);
+  animation: alertPulse 1.2s ease-in-out infinite;
+}
+
+/* В редакторе сообщение держится внутри холста, а не всего окна:
+   та же точка отсчёта, что и у источников, и та же максимальная ширина. */
+body.edit #message-area {
+  position: absolute;
+  top: calc(var(--cv-top) + var(--cv-height) * 0.04);
+  max-width: var(--cv-width);
+}
+
+@keyframes alertPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 60, 90, 0.5); }
+  50%      { box-shadow: 0 0 30px 4px rgba(255, 60, 90, 0.55); }
+}

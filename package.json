@@ -1,0 +1,76 @@
+{
+  "name": "twitch-overlay",
+  "version": "2.0.0",
+  "description": "Панель модератора для Twitch-оверлеев: картинки, видео, сайты, текст, TTS и прямое управление OBS",
+  "keywords": [
+    "twitch",
+    "overlay",
+    "obs",
+    "moderator",
+    "tts",
+    "broadcast",
+    "scene"
+  ],
+  "license": "MIT",
+  "author": "dem0st",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dem0st/twitch-overlay.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dem0st/twitch-overlay/issues"
+  },
+  "homepage": "https://github.com/dem0st/twitch-overlay#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "node server.js",
+    "desktop": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "express": "^4.21.2",
+    "obs-websocket-js": "^5.0.8",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
+    "socket.io-client": "^4.8.3"
+  },
+  "build": {
+    "appId": "com.overlaycontrol.app",
+    "productName": "Overlay Control",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "public/**/*",
+      "server.js",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Overlay Control"
+    }
+  }
+}
