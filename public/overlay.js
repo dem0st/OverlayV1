@@ -1,10 +1,14 @@
 /* ============ Оверлей: рендер источников ============ */
 
-if (new URLSearchParams(location.search).get('edit') === '1') {
+const urlParams = new URLSearchParams(location.search);
+if (urlParams.get('edit') === '1') {
   document.body.classList.add('edit');
 }
 
-const socket = io({ auth: { role: 'overlay' }, reconnectionDelayMax: 1000 });
+const socket = io({
+  auth: { role: 'overlay', token: urlParams.get('t') || '' },
+  reconnectionDelayMax: 1000
+});
 
 const root = document.getElementById('sources');
 const rendered = new Map(); // id -> { sig, el }
@@ -194,7 +198,11 @@ function proxyUrl(url) {
     // data:/blob: отдаём как есть — прокси такие адреса не понимает
     if (u.protocol === 'data:' || u.protocol === 'blob:') return url;
     if (u.origin === location.origin) return url;
-    return '/proxy?url=' + encodeURIComponent(u.href);
+    const params = new URLSearchParams(location.search);
+    const token = params.get('t');
+    let out = '/proxy?url=' + encodeURIComponent(u.href);
+    if (token) out += '&t=' + encodeURIComponent(token);
+    return out;
   } catch {
     return url;
   }

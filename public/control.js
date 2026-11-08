@@ -262,6 +262,9 @@ function connect() {
   }
   socket = io({ auth: { role: 'control', token }, reconnectionDelayMax: 1000 });
 
+  const preview = document.getElementById('preview');
+  if (preview) preview.src = '/overlay?t=' + encodeURIComponent(token) + '&edit=1';
+
   socket.on('connect', () => {
     setStatus(true);
     hideGate();

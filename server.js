@@ -90,7 +90,7 @@ const TTS_PROVIDERS = {
       const url = 'https://api.streamelements.com/kappa/v2/speech'
         + `?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`
         + (token ? '&key=' + encodeURIComponent(token) : '');
-      const res = await fetchWithTimeout(url, { headers: { 'User-Agent': 'OverlayV2/1.0' } });
+      const res = await fetchWithTimeout(url, { headers: { 'User-Agent': 'OverlayV1/1.0' } });
       if (res.status === 401) {
         throw new Error('StreamElements: проверь STREAMELEMENTS_TOKEN (overlay-токен из JWT)');
       }
@@ -300,14 +300,83 @@ app.get('/healthz', (_req, res) => {
   if (rebooting) return res.status(503).json({ ok: false, rebooting: true });
   res.json({ ok: true });
 });
-app.get('/overlay', (_req, res) => res.sendFile(path.join(ROOT, 'public', 'overlay.html')));
+// Извлекает токен: из query ?t=..., из Authorization: Bearer <token> или Authorization: <token>
+function extractToken(req) {
+  let token = req.query.token || '';
+  const auth = req.get('Authorization') || '';
+  if (auth.startsWith('Bearer ')) token = auth.slice(7);
+  else if (auth && !token) token = auth;
+  return token;
+}
+
+// Проверка на попытку доступа к локальным/приватным адресам (SSRF-защита для /proxy)
+const PRIVATE_HOST_RE = /^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.|0\.0\.0\.0|localhost|localhost\.localdomain|::1|fc00:|fe80:|100\.6[4-9]\.|100\.7[0-9]\.|100\.8[0-9]\.|100\.9[0-9]\.|100\.1[0-1][0-9]\.|100\.12[0-7]\.)/i;
+
+function isPrivateUrl(url) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (host === 'localhost' || host === 'localhost.localdomain') return true;
+    if (PRIVATE_HOST_RE.test(host)) return true;
+  } catch {
+    return true; // некорректный URL — блокируем
+  }
+  return false;
+}
+
+// Middleware для аутентификации overlay endpoint
+function requireAuth(req, res, next) {
+  const token = extractToken(req);
+  const rank = token ? rankOf(token) : null;
+  
+  if (!rank) {
+    return res.status(401).send('Требуется аутентификация');
+  }
+  
+  req.authRank = rank;
+  next();
+}
+
+app.get('/overlay', requireAuth, (_req, res) => res.sendFile(path.join(ROOT, 'public', 'overlay.html')));
 app.get('/control', (_req, res) => res.sendFile(path.join(ROOT, 'public', 'control.html')));
   app.get('/help', (_req, res) => res.sendFile(path.join(ROOT, 'public', 'help.html')));
-app.get('/proxy', async (req, res) => {
+// Middleware для аутентификации proxy endpoint
+function requireProxyAuth(req, res, next) {
+  const token = extractToken(req);
+  const rank = token ? rankOf(token) : null;
+  
+  if (!rank) {
+    return res.status(401).json({ 
+      error: 'Требуется аутентификация',
+      code: 'NO_AUTH' 
+    });
+  }
+  
+  // Только head и moderator могут использовать proxy
+  if (!can({ data: { rank } }, 'sources')) {
+    return res.status(403).json({ 
+      error: 'Недостаточно прав',
+      code: 'INSUFFICIENT_PERMS' 
+    });
+  }
+  
+  next();
+}
+
+app.get('/proxy', requireProxyAuth, async (req, res) => {
   let url = String(req.query.url || '');
   if (!/^https?:\/\//i.test(url)) return res.status(400).end('bad url');
+
+  // SSRF-защита: запрет на локальные и приватные адреса
+  if (isPrivateUrl(url)) {
+    return res.status(403).json({ 
+      error: 'Доступ к локальным адресам запрещён',
+      code: 'SSRF_BLOCKED' 
+    });
+  }
+
   try {
-    const up = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const up = await fetchWithTimeout(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     if (!up.ok || !up.body) return res.status(502).end('fetch failed');
     const ctype = up.headers.get('content-type') || 'application/octet-stream';
     res.set('Content-Type', ctype);
@@ -464,27 +533,35 @@ async function disconnectObs() {
 
 io.use((socket, next) => {
   const { role = 'overlay', token } = socket.handshake.auth || {};
+  
   if (role === 'control') {
     const rank = rankOf(token);
     if (!rank) return next(new Error('unauthorized'));
     socket.data = socket.data || {};
     socket.data.rank = rank;
+  } else if (role === 'overlay') {
+    // Оверлей тоже требует валидный токен — иначе список источников и состояние OBS
+    // были бы видны любому в сети.
+    const rank = token ? rankOf(token) : null;
+    if (!rank) return next(new Error('unauthorized'));
+    socket.data = socket.data || {};
+    socket.data.rank = rank;
   }
+  
   next();
 });
 
 function attachSocketHandlers(io) {
 io.on('connection', (socket) => {
   const isControl = socket.handshake.auth?.role === 'control';
-  const rank = isControl ? (socket.data && socket.data.rank) : null;
+  const rank = socket.data && socket.data.rank;
   socket.join(isControl ? 'control' : 'overlay');
   // Панель получает роль сразу с первым конфигом — до отрисовки карточек
-  socket.emit('config', isControl
-    ? { ...publicConfig(), ui: { ...publicConfig().ui, role: rank } }
-    : publicConfig());
+  socket.emit('config', { ...publicConfig(), ui: { ...publicConfig().ui, role: rank || null } });
   socket.emit('obs:state', obsPublic());
 
   if (isControl) console.log(`[panel] панель подключилась (${socket.id}) · роль ${rank}`);
+  else console.log(`[overlay] оверлей подключился (${socket.id}) · роль ${rank}`);
 
   socket.on('sources:set', (payload = {}) => {
     if (!socket.rooms.has('control')) return;
@@ -1044,11 +1121,27 @@ function lanAddresses() {
 /* на Windows подписываем адреса именем адаптера и отделяем реальные (Wi-Fi/Ethernet)
    от виртуальных (VirtualBox, Hyper-V, VPN) — реальные печатаем первыми */
 function lanEntries() {
-  const ips = lanAddresses();
   if (process.platform !== 'win32') {
-    return ips.map((address) => ({ address, name: '', virtual: false, linkLocal: address.startsWith('169.254.') }));
+    // Linux/macOS: ключ os.networkInterfaces() — это имя интерфейса (eth0, wlan0, docker0...)
+    const entries = [];
+    for (const [name, list] of Object.entries(os.networkInterfaces())) {
+      for (const ni of list || []) {
+        if (ni.family !== 'IPv4' || ni.internal) continue;
+        entries.push({
+          address: ni.address,
+          name,
+          desc: '',
+          wifi: /^(wl|wlan|wlp)/i.test(name),
+          virtual: /^(lo|docker|veth|br-|virbr|vmnet|vboxnet|vnic|tun|tap|zt|wg|ham|cni|flannel|kube|utun|ppp|sl)/i.test(name),
+          linkLocal: ni.address.startsWith('169.254.'),
+        });
+      }
+    }
+    const rank = (e) => (e.linkLocal ? 2 : e.virtual ? 1 : 0);
+    return entries.sort((a, b) => rank(a) - rank(b));
   }
 
+  const ips = lanAddresses();
   let rows = [];
   try {
     const script = [
@@ -1097,6 +1190,10 @@ function lanEntries() {
 
 const PORT = Number(process.env.PORT) || config.port;
 
+// По умолчанию слушаем только localhost. Чтобы панель была доступна по локальной сети,
+// запустите с переменной HOST=0.0.0.0 (или задайте конкретный адрес, например HOST=192.168.1.50).
+const SERVER_HOST = process.env.HOST || '127.0.0.1';
+
 function bootBanner() {
   const entries = lanEntries();
   const main = entries.filter((e) => !e.virtual && !e.linkLocal);
@@ -1104,10 +1201,11 @@ function bootBanner() {
 
   console.log('');
   console.log('  ╔══════════════════════════════════════════════╗');
-  console.log('  ║          OVERLAY SERVER ЗАПУЩЕН              ║');
+  console.log('  ║              OVERLAYV1 ЗАПУЩЕН               ║');
   console.log('  ╚══════════════════════════════════════════════╝');
   console.log('');
-  console.log(`  Оверлей (добавить в OBS):   http://localhost:${PORT}/overlay`);
+  console.log(`  Оверлей (для OBS):          http://localhost:${PORT}/overlay?t=${controlToken}`);
+  console.log(`  !!! Без токена оверлей не откроется.`);
   console.log(`  Панель модератора:          http://localhost:${PORT}/control?t=${controlToken}`);
 
   for (const e of main) {
@@ -1139,7 +1237,7 @@ function startListen(attempt) {
       process.exit(1);
     }
   });
-  server.listen(PORT, () => {
+  server.listen(PORT, SERVER_HOST, () => {
     fs.appendFileSync(BOOT_LOG, new Date().toISOString() + ' LISTEN_OK pid=' + process.pid + ' at=' + Date.now() + '\n');
     bootBanner();
     if (obsCfg.enabled) {
